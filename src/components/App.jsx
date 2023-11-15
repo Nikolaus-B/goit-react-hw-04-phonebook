@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { PhoneForm } from './PhoneForm/PhoneForm';
 import { Filter } from './Filter/Filter';
 import { ContactList } from './ContactList/ContactList';
@@ -6,104 +6,73 @@ import { nanoid } from 'nanoid';
 import { GlobalStyle } from './GlobalStyle';
 import { Container } from './MainPageStyle.styled';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import { NoPhoneMessage } from './NoPhoneMessage/NoPhoneMessage';
 
-const stotageContacts = 'contacts';
+const storageContacts = 'contacts';
 
-export class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
+const savedContacts = window.localStorage.getItem(storageContacts);
+
+export const App = () => {
+  const [contacts, setContacts] = useState(JSON.parse(savedContacts));
+  const [filters, setFilters] = useState('');
+
+  useEffect(() => {
+    window.localStorage.setItem(storageContacts, JSON.stringify(contacts));
+  }, [contacts]);
+
+  const updateTopic = newTopic => {
+    setFilters(newTopic);
   };
 
-  componentDidMount() {
-    const savedContacts = window.localStorage.getItem(stotageContacts);
-
-    if (savedContacts !== null) {
-      this.setState({
-        contacts: JSON.parse(savedContacts),
-      });
-    }
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.contacts !== prevState.contacts) {
-      window.localStorage.setItem(
-        stotageContacts,
-        JSON.stringify(this.state.contacts)
-      );
-    }
-  }
-
-  updateFilter = newTopic => {
-    this.setState(() => {
-      return {
-        filter: newTopic,
-      };
-    });
-  };
-
-  filterContacts = () => {
-    const { contacts, filter } = this.state;
-
+  const filterContacts = () => {
     return contacts.filter(contact => {
       const contactName = contact.name.toLowerCase();
       const contactNumber = contact.number;
 
       return (
-        contactName.includes(filter.toLowerCase()) ||
-        contactNumber.includes(filter)
+        contactName.includes(filters.toLowerCase()) ||
+        contactNumber.includes(filters)
       );
     });
   };
 
-  addPhone = newItem => {
-    const { contacts } = this.state;
-
-    if (contacts.some(contact => contact.name === newItem.name)) {
-      Notify.failure(`${newItem.name} already in phonebook`);
+  const addPhone = newPhone => {
+    if (contacts.some(contact => contact.name === newPhone.name)) {
+      Notify.failure(`${newPhone.name} already in phonebook`);
       return;
     }
 
-    const item = {
-      ...newItem,
+    const phone = {
+      ...newPhone,
       id: nanoid(),
     };
-    this.setState(prevState => {
-      return {
-        contacts: [...prevState.contacts, item],
-      };
-    });
-    Notify.success(`${newItem.name} added to your contacts`);
+    setContacts(prevContacts => [...prevContacts, phone]);
+
+    Notify.success(`${newPhone.name} added to your contacts`);
   };
 
-  deletePhone = user => {
+  const deletePhone = user => {
     Notify.info(`${user.name} removed from your phone book`);
 
-    this.setState(prevState => {
-      return {
-        contacts: prevState.contacts.filter(item => item.id !== user.id),
-      };
-    });
+    setContacts(prevContacts =>
+      prevContacts.filter(item => item.id !== user.id)
+    );
   };
 
-  render() {
-    const { filter } = this.state;
-    const filteredContacts = this.filterContacts();
+  const filteredUsers = filterContacts();
 
-    return (
-      <Container>
-        <h1>Phonebook</h1>
-        <PhoneForm onAdd={this.addPhone} />
-        <h2>Contacts</h2>
-        <Filter filter={filter} onSearchPhone={this.updateFilter} />
-        <ContactList items={filteredContacts} onDelete={this.deletePhone} />
-        <GlobalStyle />
-      </Container>
-    );
-  }
-}
+  return (
+    <Container>
+      <h1>Phonebook</h1>
+      <PhoneForm onAdd={addPhone} />
+      <h2>Contacts</h2>
+      <Filter filter={filters} onSearchPhone={updateTopic} />
+      {contacts.length > 0 ? (
+        <ContactList items={filteredUsers} onDelete={deletePhone} />
+      ) : (
+        <NoPhoneMessage />
+      )}
+      <GlobalStyle />
+    </Container>
+  );
+};

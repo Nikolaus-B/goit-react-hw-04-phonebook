@@ -3,6 +3,7 @@ import styled from 'styled-components';
 export const PhonebookList = styled.ul`
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 15px;
   margin-top: 20px;
 `;
@@ -12,8 +13,6 @@ export const PhonebookItem = styled.li`
   flex-direction: row;
   gap: 10px;
 `;
-
-// export const PhonebookName = styled.p``;
 
 export const PhonebookNumber = styled.span`
   color: #149bf3;
