@@ -13,7 +13,7 @@ const storageContacts = 'contacts';
 const savedContacts = window.localStorage.getItem(storageContacts);
 
 export const App = () => {
-  const [contacts, setContacts] = useState(JSON.parse(savedContacts));
+  const [contacts, setContacts] = useState(JSON.parse(savedContacts) || []);
   const [filters, setFilters] = useState('');
 
   useEffect(() => {
